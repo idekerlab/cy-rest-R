@@ -23,7 +23,7 @@ cy.version = fromJSON(rawToChar(cytoscape.version$content))
 print(cy.version)
 
 # 1. Create simple directed graph with Barabasi-Albert model
-graph1 <- barabasi.game(200)
+graph1 <- barabasi.game(11200)
 
 # 2. Calculate some statistics and assign then to the graph
 graph1$name = "Scale-Free Network (BA Model)"
@@ -32,8 +32,8 @@ graph1$density = graph.density(graph1)
 V(graph1)$degree <- degree(graph1)
 V(graph1)$closeness <- closeness(graph1)
 V(graph1)$betweenness <- betweenness(graph1)
-V(graph1)$page_rank <- page.rank(graph1)$vector
-V(graph1)$community <- label.propagation.community(graph1)$membership
+#V(graph1)$page_rank <- page.rank(graph1)$vector
+#V(graph1)$community <- label.propagation.community(graph1)$membership
 
 E(graph1)$betweenness <- edge.betweenness(graph1)
 
