@@ -1,0 +1,213 @@
+---
+title: "Introduction to Cytoscape REST API"
+author: "Keiichiro Ono"
+date: "8/6/2014"
+output: html_document
+---
+
+## Basic Workflow 1: Fundamentals
+
+
+by [Keiichiro Ono](http://keiono.github.io/)
+
+
+----
+
+![](http://cytoscape.org/images/logo/cy3logoOrange.svg)  ![](Rlogo.png)
+
+
+## Introduction
+This is an introduction to Cytoscape via RESTful API using R.  You will learn how to access Cytoscape via RESTful API.
+
+### Prerequisites
+* Basic knowledge of RESTful API
+    * [This is a good introduction to REST](http://www.restapitutorial.com/)
+* Basic R skills
+* Basic knowledge of Cytoscape 
+
+### System Requirments
+* [Java 7+](http://www.oracle.com/technetwork/java/javase/downloads/jdk7-downloads-1880260.html)
+* [Cytoscape 3.1.1 or later](http://cytoscape.org/download.html)
+* Latest version of [cy-rest app](https://github.com/keiono/cy-rest/releases/latest)
+
+----
+
+## Questions or Feature Requests?
+Please send them to our [mailing list](https://groups.google.com/forum/#!forum/cytoscape-discuss)
+
+----
+
+## 1. Import R Packages and Basic Setup
+
+### 3rd Party Library
+In this tutorial, we will use several popular R packages to make this workflow more realistic.
+
+#### HTTP Client
+Since you need to access Cytoscape via RESTful API, HTTP client library is the most important tool you need to understand.  In this example, we use [httr](http://cran.r-project.org/web/packages/httr/index.html).
+
+#### JSON Encoding and Decoding
+Data will be exchanged as JSON between Cytoscape and R.  We will use 3rd party package [RJSONIO](http://cran.r-project.org/web/packages/RJSONIO/index.html) in this workflow to encode/decode JSON.
+
+### Basic Setup for the API
+At this point, there is only one option for the cy-rest module: port number.
+
+#### URL to Access Cytoscape REST API
+We assume you are running Cytoscape desktop application and R on a same machine.  To access Cytoscape REST API, use the following URL:
+
+```
+http://localhost:PORT_NUMBER/v1/
+```
+
+where __v1__ is the current version number of API.  Once the final release is ready, we guarantee compatibility of your scripts as long as major version number is the same.
+
+
+#### Change Port Number
+By default, port number used by cy-rest module is __1234__.  To change this, you need set a global Cytoscape property from _Edit-->Preserences-->Properties..._ and add a new property __port.number__.
+
+```{r}
+library(RJSONIO)
+library(igraph)
+library(httr)
+
+# Basic settings
+port.number = 1234
+base.url = paste("http://localhost:", toString(port.number), "/v1", sep="")
+
+print(base.url)
+```
+
+### 2. Test Cytoscape REST API
+
+#### Understand REST Basics
+
+| HTTP Verb | Description |
+|:----------:|:------------|
+| GET | Retrieving resources (in most cases, it is Cytoscape data objects, such as networks or tables) |
+| POST | Creating resources | 
+| PUT | Changing/replacing resources or collections |
+| DELETE | Deleting resources |
+
+----
+
+#### Make sure Cytoscape REST API module is running
+First, send a simple request and check server status.
+
+```{r}
+version.url = paste(base.url, "version", sep="/")
+cytoscape.version = GET(version.url)
+cy.version = fromJSON(rawToChar(cytoscape.version$content))
+print(cy.version)
+```
+
+#### Generate Network with igraph
+
+```{r}
+# 1. Create simple directed graph with Barabasi-Albert model
+graph1 <- barabasi.game(200)
+
+# 2. Calculate some statistics and assign then to the graph
+graph1$name = "Scale-Free Network (BA Model)"
+graph1$density = graph.density(graph1)
+
+V(graph1)$degree <- degree(graph1)
+V(graph1)$closeness <- closeness(graph1)
+V(graph1)$betweenness <- betweenness(graph1)
+V(graph1)$page_rank <- page.rank(graph1)$vector
+V(graph1)$community <- label.propagation.community(graph1)$membership
+
+E(graph1)$betweenness <- edge.betweenness(graph1)
+```
+
+#### Build Custom Visual Style
+
+```{r}
+style.name = "MyCustomStyle3"
+
+# Defaults
+def.node.color <- list(
+  visualProperty = "NODE_FILL_COLOR",
+  value = "#00aabb"
+)
+
+def.node.border.width <- list(
+  visualProperty = "NODE_BORDER_WIDTH",
+  value = 0
+)
+
+def.edge.target.arrow <- list(
+  visualProperty="EDGE_TARGET_ARROW_SHAPE",
+  value="ARROW"
+)
+
+defaults <- list(def.node.color, def.node.border.width,def.edge.target.arrow)
+
+# Visual Mappings
+min.betweenness = min(V(graph1)$betweenness)
+max.betweenness = max(V(graph1)$betweenness)
+
+mappings = list()
+
+point1 = list(
+  value=min.betweenness,
+  lesser= "20.0",
+  equal="20.0",
+  greater="20.0"
+)
+
+point2 = list(
+  value=max.betweenness,
+  lesser="200.0",
+  equal="200.0",
+  greater="200.0"
+)
+
+node.size.continuous.points = list(point1, point2)
+
+node.size = list(
+  mappingType="continuous",
+  mappingColumn="betweenness",
+  mappingColumnType="Integer",
+  visualProperty="NODE_SIZE",
+  points = node.size.continuous.points
+)
+
+node.label = list(
+  mappingType="passthrough",
+  mappingColumn="name",
+  mappingColumnType="String",
+  visualProperty="NODE_LABEL"
+)
+
+mappings = list(node.size, node.label)
+
+style <- list(title=style.name, defaults = defaults, mappings = mappings)
+style.JSON <- toJSON(style)
+
+style.url = paste(base.url, "styles", sep="/")
+POST(url=style.url, body=style.JSON, encode = "json")
+
+```
+
+#### Send the graph to Cytoscape
+
+```{r}
+# Load utility functions
+source('toCytoscape.R')
+
+# Convert to Cytoscape style JSON object
+cygraph <- toCytoscape(graph1)
+
+# Send it to Cytoscape!
+network.url = paste(base.url, "networks", sep="/")
+res <- POST(url=network.url, body=cygraph, encode="json")
+network.suid = unname(fromJSON(rawToChar(res$content)))
+```
+
+#### Apply layouts and Visual Style
+```{r}
+apply.layout.url = paste(base.url, "apply/layouts/force-directed", toString(network.suid), sep="/")
+apply.style.url = paste(base.url, "apply/styles", style.name, toString(network.suid), sep="/")
+
+res <- GET(apply.layout.url)
+res <- GET(apply.style.url)
+```
