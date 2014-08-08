@@ -32,8 +32,8 @@ graph1$density = graph.density(graph1)
 V(graph1)$degree <- degree(graph1)
 V(graph1)$closeness <- closeness(graph1)
 V(graph1)$betweenness <- betweenness(graph1)
-#V(graph1)$page_rank <- page.rank(graph1)$vector
-#V(graph1)$community <- label.propagation.community(graph1)$membership
+V(graph1)$page_rank <- page.rank(graph1)$vector
+V(graph1)$community <- label.propagation.community(graph1)$membership
 
 E(graph1)$betweenness <- edge.betweenness(graph1)
 

@@ -1,0 +1,139 @@
+---
+title: "Network Analysis with igraph"
+author: "Keiichiro Ono"
+date: "8/7/2014"
+output: html_document
+---
+
+## Basic Workflow 2: Working with igraph
+
+by [Kazuhiro Takemoto](https://sites.google.com/site/kztakemoto/r-seminar-on-igraph---supplementary-information)*
+
+
+Updated by [Keiichiro Ono](http://keiono.github.io/)
+
+
+(The original tutorial was developed by Dr. Takemoto, and updated by Keiichiro Ono for cy-rest.)
+
+----
+
+![](http://cytoscape.org/images/logo/cy3logoOrange.svg)  ![](Rlogo.png)
+
+
+## Introduction
+Welcome to part 2 of the R tutorial.  In this section, you will learn how to use  Cytoscape with [igraph](http://igraph.org/r/).
+
+### What is igraph?
+igraph is one of the most popular network analysis toolkits for R/Python/C.  It has a lot of graph analysis algorithms and utilities that Cytoscape does not have.  If you use Cytoscape from igraph, you can use variety of network analysis functions in igraph and visualize the result with powerful visualization tools available in Cytoscape.
+
+
+```{r}
+# Basic setup
+library(igraph)
+library(RJSONIO)
+library(httr)
+
+port.number = 1234
+base.url = paste("http://localhost:", toString(port.number), "/v1", sep="")
+print(base.url)
+```
+
+## Loading Networks
+There are many ways to import network data into igraph.  In this example, let's try to load text data as Data Frame, and then convert it into igraph object.
+
+
+```{r}
+# Load list of edges as Data Frame
+network.df <- read.table("data/eco_EM+TCA.txt")
+
+# Convert it into igraph object
+network <- graph.data.frame(network.df,directed=T)
+
+# Remove duplicate edges & loops
+g.tca <- simplify(network, remove.multiple=T, remove.loops=T)
+
+# Name it
+g.tca$name = "Ecoli TCA Cycle"
+```
+
+### Convert igraph object into JSON
+As you learned in the first tutorial, basic data exchange format between Cytoscape and external tools is Cytoscape.js JSON.  To send igraph object to Cytoscape, you need to convert it into JSON: 
+
+```{r}
+# This function will be published as a part of utility package, but not ready yet.
+source('toCytoscape.R')
+
+# Convert it into Cytosccape.js JSON
+cygraph <- toCytoscape(g.tca)
+```
+
+
+### Visualize it in Cytoscape
+Now you are ready to visualize your data in Cytoscape.  It's very straightforward:
+
+```{r}
+send2cy <- function(cygraph) {
+  network.url = paste(base.url, "networks", sep="/")
+  res <- POST(url=network.url, body=cygraph, encode="json")
+  network.suid = unname(fromJSON(rawToChar(res$content)))
+  print(network.suid)
+  
+  # Apply Visual Style and Circular Layout
+  apply.layout.url = paste(base.url, "apply/layouts/circular", toString(network.suid), sep="/")
+  apply.style.url = paste(base.url, "apply/styles/default%20black", toString(network.suid), sep="/")
+  
+  res <- GET(apply.layout.url)
+  res <- GET(apply.style.url)
+}
+
+send2cy(cygraph)
+```
+
+
+If you want to visualize your network in igraph, obviously it is possible:
+
+
+```{r}
+plot(g.tca,vertex.label=V(g.tca)$name)
+```
+
+This is a static image and there is no interactivity.  In contrast, the result you see in the Cytoscape applicaiton window should look like this:
+
+
+![cy-ss1](http://cl.ly/WxYB/basic2-tca1.png)
+
+
+You can tweak your result interactively with fully-featured network visualization workbench.  And of course, you can modify your [Visual Styles](http://wiki.cytoscape.org/Cytoscape_3/UserManual/Styles) programmatically or manually. 
+
+
+...Which one do you like?
+
+
+### Find Shortest Path
+
+* Find path from _D-Glucose_ to _2-Oxoglutarate_
+
+```{r}
+paths <- get.all.shortest.paths(g.tca,"D-Glucose","2-Oxoglutarate",mode="out")
+
+# Nodes in the first path
+print(V(g.tca)[paths$res[[1]]])
+
+# Edges in the path
+print(E(g.tca,path=paths$res[[1]]))
+
+# Add
+E(g.tca, path=paths$res[[1]])$path <- 1
+print(E(g.tca)$path)
+```
+
+#### Visualizing Paths
+The simplest way to visualize paths in Cytoscape is simply selecting those.
+
+(Under construction...)
+
+
+
+
+
+

@@ -5,7 +5,12 @@ toCytoscape <- function (igraphobj) {
   
   # Extract nodes
   node_count = length(V(igraphobj))
-  V(igraphobj)$id <-c(1:node_count)
+  if('name' %in% list.vertex.attributes(igraphobj)) {
+    V(igraphobj)$id <- V(igraphobj)$name
+  } else {
+    V(igraphobj)$id <-as.character(c(1:node_count))
+  }
+  
   
   nodes <- V(igraphobj)
   nds = list()
@@ -17,11 +22,7 @@ toCytoscape <- function (igraphobj) {
     node_attr = list()
     
     for(j in 1:length(v_attr)) {
-      if(v_names[j] == "id") {
-        node_attr[j] = toString(v_attr[[j]][i])
-      } else {
-        node_attr[j] = v_attr[[j]][i]  
-      }
+      node_attr[j] = v_attr[[j]][i]  
     }
     names(node_attr) = v_names
     nds[[i]] = list(data = node_attr)
@@ -30,11 +31,16 @@ toCytoscape <- function (igraphobj) {
   
   edges <- get.edgelist(igraphobj)
   edge_count = ecount(igraphobj)
+  e_attr <- edge.attributes(igraphobj)
+  e_names = list.edge.attributes(igraphobj)
+  
+  e_names_len <- length(e_names)
   
   eds = list()
   for(i in 1:edge_count) {
-    edge_attr = list(source=toString(edges[i,1]), target=toString(edges[i,2]))
-    eds[[i]] = list(data=edge_attr)
+    st = list(source=toString(edges[i,1]), target=toString(edges[i,2]))
+              #path=e_attr[[1]][i])
+    eds[[i]] = list(data=st)
   }
   
   
