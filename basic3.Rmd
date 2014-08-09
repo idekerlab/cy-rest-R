@@ -1,11 +1,11 @@
 ---
-title: "Network Analysis with igraph"
+title: "Custom Visual Styles"
 author: "Keiichiro Ono"
-date: "8/7/2014"
+date: "8/8/2014"
 output: html_document
 ---
 
-## Basic Workflow 2: Working with igraph
+## Basic Workflow 3: Visual Styles
 
 by [Kazuhiro Takemoto](https://sites.google.com/site/kztakemoto/r-seminar-on-igraph---supplementary-information)*
 
@@ -21,10 +21,7 @@ Updated by [Keiichiro Ono](http://keiono.github.io/)
 
 
 ## Introduction
-Welcome to part 2 of the R tutorial.  In this section, you will learn how to use  Cytoscape with [igraph](http://igraph.org/r/).
-
-### What is igraph?
-igraph is one of the most popular network analysis toolkits for R/Python/C.  It has a lot of graph analysis algorithms and utilities that Cytoscape does not have.  If you use Cytoscape from igraph, you can use variety of network analysis functions in igraph and visualize the result with powerful visualization tools available in Cytoscape.
+Welcome to part 3 of the R tutorial.  In this section, you will learn how to create your own Visual Styles programmatically.
 
 
 ```{r}
@@ -35,69 +32,30 @@ library(httr)
 
 port.number = 1234
 base.url = paste("http://localhost:", toString(port.number), "/v1", sep="")
-print(base.url)
-```
-
-## Loading Networks
-There are many ways to import network data into igraph.  In this example, let's try to load text data as Data Frame, and then convert it into igraph object.
-
-
-```{r}
-# Load list of edges as Data Frame
-network.df <- read.table("data/eco_EM+TCA.txt")
-
-# Convert it into igraph object
-network <- graph.data.frame(network.df,directed=T)
-
-# Remove duplicate edges & loops
-g.tca <- simplify(network, remove.multiple=T, remove.loops=T)
-
-# Name it
-g.tca$name = "Ecoli TCA Cycle"
-```
-
-### Convert igraph object into JSON
-As you learned in the first tutorial, basic data exchange format between Cytoscape and external tools is Cytoscape.js JSON.  To send igraph object to Cytoscape, you need to convert it into JSON: 
-
-```{r}
-# This function will be published as a part of utility package, but not ready yet.
 source('toCytoscape.R')
-
-# Convert it into Cytosccape.js JSON
-cygraph <- toCytoscape(g.tca)
 ```
 
-
-### Visualize it in Cytoscape
-Now you are ready to visualize your data in Cytoscape.  It's very straightforward:
-
-```{r}
-send2cy(cygraph, 'default%20black', 'circular')
-```
-
-
-If you want to visualize your network in igraph, obviously it is possible:
+### Reload the Data
+In this tutorial, we will use the same sample data as we used in the last section.  Let's reload everything again.
 
 
 ```{r}
-plot(g.tca,vertex.label=V(g.tca)$name)
+network.df <- read.table("data/eco_EM+TCA.txt")
+network <- graph.data.frame(network.df,directed=T)
+g.tca <- simplify(network, remove.multiple=T, remove.loops=T)
+g.tca$name = "Ec TCA Cycle"
 ```
 
-This is a static image and there is no interactivity.  In contrast, the result you see in the Cytoscape applicaiton window should look like this:
 
+## Understanding Visual Style
 
-![cy-ss1](http://cl.ly/WxYB/basic2-tca1.png)
+### Path Visualization
+To understand Styles in Cytoscape, let's visualize shortest path between two nodes in the network.
 
+#### Find Paths in igraph 
+There are many built-in path finding algorithms in igraph.
 
-You can tweak your result interactively with fully-featured network visualization workbench.  And of course, you can modify your [Visual Styles](http://wiki.cytoscape.org/Cytoscape_3/UserManual/Styles) programmatically or manually. 
-
-
-...Which one do you like?
-
-
-### Find Shortest Path
-
-* Find path from _D-Glucose_ to _2-Oxoglutarate_
+* Find all shortest paths from _D-Glucose_ to _2-Oxoglutarate_
 
 ```{r}
 paths <- get.all.shortest.paths(g.tca,"D-Glucose","2-Oxoglutarate",mode="out")
@@ -115,10 +73,7 @@ print(E(g.tca,path=paths$res[[1]]))
 E(g.tca, path=paths$res[[1]])$path <- 1
 ```
 
-----
-
-
-### Understanding _Styles_
+### _Styles_ in Cytoscape
 In igraph _plot_ function, you need to specify actual visual property values directly.  For example, if you want to paint the path found in the previous section in red, you need to set actual color (red) for each edge in the path.  Instead, Cytoscape used a mapping mechanism called __Visual Style__ and __you can reuse the mapping instructions for multiple networks__.  For more details, please read the [manual](http://wiki.cytoscape.org/Cytoscape_3/UserManual/Styles).
 
 
@@ -172,7 +127,7 @@ def.edge.target.arrow.color = list(
 
 def.node.labelposition <- list(
   visualProperty = "NODE_LABEL_POSITION",
-  value = "S,NW,c,4.00,0.00"  
+  value = "S,NW,c,6.00,0.00"  
 )
 
 def.edge.target.arrow <- list(
@@ -185,10 +140,19 @@ defaults <- list(def.node.color, def.node.size, def.node.labelposition,
                  def.edge.width, def.edge.target.arrow.color)
 ```
 
+It looks complicated, but actually it's simple.  All you have to do is defining key-value pair for each visual variables you want to change.  It's just like CSS.
+
+##### Mappings
+__Visual Mapping__ is the most important concept in Cytoscape.  In Cytoscape, __data controls the view__.  This means, once mapping is set, color, size, shape, or all other visual variables are controlled by one of the column values in your data table.
+
+Let's define a simple mapping: _if path value is 1, use RED for painting objects_.
+
+
 ```{r}
 # Visual Mappings
 mappings = list()
 
+# Actual mapping.  This is a reusable component.
 pair1 = list(
   key = "1",
   value = "red"
@@ -197,6 +161,7 @@ pair1 = list(
 # This mapping object is also reusable!
 discrete.mappings = list(pair1)
 
+# Assign the map for node, edge, and label colors.
 node.color = list(
   mappingType="discrete",
   mappingColumn="path",
@@ -229,6 +194,7 @@ edge.target.arrow.color = list(
   map = discrete.mappings
 )
 
+# One more instruction.  Use "name" column for label.
 node.label = list(
   mappingType="passthrough",
   mappingColumn="name",
@@ -243,20 +209,20 @@ style.JSON <- toJSON(style)
 
 style.url = paste(base.url, "styles", sep="/")
 POST(url=style.url, body=style.JSON, encode = "json")
-
 ```
 
 Well, this may look a bit cumbersome for the first time because we make everything from scratch.  However, in many cases, you can use preset Styles as your starting point and customize it for your purpose.  But remember, you made a reusable set of instructions how to visualize your result controled by the data.  __Style object is just like a CSS for Cytoscape.  It is reusable, and independent from your content (data)__.
 
 In this section, you made a style programmatically, but of course, you can manually create Styles from GUI if you want.
 
+
+#### Create Visualization with our Custom Style
+Finally, send everything back to Cytoscape and visualize it!
+
 ```{r}
-cygraph.updated <- toCytoscape(g.tca)
-send2cy(cygraph.updated, style.name, 'circular')
+send2cy(toCytoscape(g.tca), style.name, 'circular')
 ```
 
+Now you see the path!
 
-
-
-
-
+![](http://cl.ly/WyVf/tca_path_final.png)
