@@ -69,7 +69,7 @@ mapAttributes <- function(attr.names, all.attr, i) {
 #       attr[j] = all.attr[[j]][i]
       attr <- c(attr, all.attr[[j]][i])
     } else {
-      cur.attr.names <- cur.attr.names[-j]
+      cur.attr.names <- cur.attr.names[cur.attr.names != attr.names[j]]
     }
   }
   names(attr) = cur.attr.names
