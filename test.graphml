@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns
+         http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+<!-- Created by igraph -->
+  <key id="g_name" for="graph" attr.name="name" attr.type="string"/>
+  <key id="g_power" for="graph" attr.name="power" attr.type="double"/>
+  <key id="g_m" for="graph" attr.name="m" attr.type="double"/>
+  <key id="g_zero.appeal" for="graph" attr.name="zero.appeal" attr.type="double"/>
+  <key id="g_algorithm" for="graph" attr.name="algorithm" attr.type="string"/>
+  <key id="v_a" for="node" attr.name="a" attr.type="double"/>
+  <key id="v_b" for="node" attr.name="b" attr.type="double"/>
+  <key id="v_c" for="node" attr.name="c" attr.type="double"/>
+  <key id="v_d" for="node" attr.name="d" attr.type="double"/>
+  <key id="v_e" for="node" attr.name="e" attr.type="double"/>
+  <key id="e_number" for="edge" attr.name="number" attr.type="double"/>
+  <graph id="G" edgedefault="directed">
+    <data key="g_name">Barabasi graph</data>
+    <data key="g_power">1</data>
+    <data key="g_m">1</data>
+    <data key="g_zero.appeal">1</data>
+    <data key="g_algorithm">psumtree</data>
+    <node id="n0">
+      <data key="v_a">1</data>
+    </node>
+    <node id="n1">
+      <data key="v_a">1</data>
+    </node>
+    <node id="n2">
+      <data key="v_a">1</data>
+    </node>
+    <node id="n3">
+      <data key="v_a">1</data>
+    </node>
+    <node id="n4">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n5">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n6">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n7">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n8">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n9">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n10">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n11">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n12">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n13">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n14">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n15">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n16">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n17">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n18">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n19">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n20">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n21">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n22">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n23">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <node id="n24">
+      <data key="v_a">1</data>
+      <data key="v_b">1</data>
+      <data key="v_c">1</data>
+      <data key="v_d">1</data>
+      <data key="v_e">1</data>
+    </node>
+    <edge source="n1" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n2" target="n1">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n3" target="n0">
+      <data key="e_number">1</data>
+    </edge>
+    <edge source="n4" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n5" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n6" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n7" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n8" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n9" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n10" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n11" target="n9">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n12" target="n1">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n13" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n14" target="n11">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n15" target="n9">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n16" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n17" target="n2">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n18" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n19" target="n5">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n20" target="n3">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n21" target="n11">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n22" target="n0">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n23" target="n17">
+      <data key="e_number">0.1</data>
+    </edge>
+    <edge source="n24" target="n13">
+      <data key="e_number">0.1</data>
+    </edge>
+  </graph>
+</graphml>
