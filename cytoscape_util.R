@@ -1,5 +1,34 @@
+# Basic settings for cyREST
+port.number = 1234
+base.url = paste("http://localhost:", toString(port.number), "/v1", sep="")
+
+#
+# Returns edge attributes for member edges.
+#
+getCommunityEdge <- function(g, community) {
+  num.edges <- ecount(g)
+  edge.community <- array(0, dim=c(num.edges))
+  edges <- get.edges(g, 1:num.edges)
+  comms <- array(community)
+  sources <- array(edges[,1])
+  targets <- array(edges[,2])
+  for(i in 1:num.edges) {
+    if(i %% 1000 == 0) {
+      print(i)
+    }
+    sidx <- sources[i]
+    tidx <- targets[i]
+    source <- comms[sidx]
+    target <- comms[tidx]
+    
+    if(source == target) {
+      edge.community[[i]] <- source
+    }
+  }
+  return(edge.community)
+}
+
 toCytoscape <- function (igraphobj) {
-  
   # Extract graph attributes
   graph_attr = graph.attributes(igraphobj)
   
@@ -8,23 +37,18 @@ toCytoscape <- function (igraphobj) {
   if('name' %in% list.vertex.attributes(igraphobj)) {
     V(igraphobj)$id <- V(igraphobj)$name
   } else {
-    V(igraphobj)$id <-as.character(c(1:node_count))
+    V(igraphobj)$id <- as.character(c(1:node_count))
   }
-  
-  
+
   nodes <- V(igraphobj)
-  nds = list()
-  
   v_attr = vertex.attributes(igraphobj)
   v_names = list.vertex.attributes(igraphobj)
   
+  nds <- array(0, dim=c(node_count))
   for(i in 1:node_count) {
-#     node_attr = list()
-#     
-#     for(j in 1:length(v_attr)) {
-#       node_attr[j] = v_attr[[j]][i]  
-#     }
-#     names(node_attr) = v_names
+    if(i %% 1000 == 0) {
+      print(i)
+    }
     nds[[i]] = list(data = mapAttributes(v_names, v_attr, i))
   }
   
@@ -41,7 +65,7 @@ toCytoscape <- function (igraphobj) {
   }
   e_names_len <- length(e_names)
   
-  eds = list()
+  eds <- array(0, dim=c(edge_count))
   for(i in 1:edge_count) {
     st = list(source=toString(edges[i,1]), target=toString(edges[i,2]))
     
@@ -51,11 +75,16 @@ toCytoscape <- function (igraphobj) {
     } else {
       eds[[i]] = list(data=st)
     }
+    
+    if(i %% 1000 == 0) {
+      print(i)
+    }
   }
 
   el = list(nodes=nds, edges=eds)
   
   x <- list(data = graph_attr, elements = el)
+  print("Done.  To json Start...")
   return (toJSON(x))
 }
 

@@ -145,7 +145,7 @@ write.table(sum,"result.txt",quote=F,col.names=F,row.names=F)
 library(linkcomm)
 
 # LinkCommの場合
-g <- read.table("eco_EM+TCA.txt")
+g <- read.table("data/eco_EM+TCA.txt")
 data <- getLinkCommunities(g,hcmethod="single")
 # data <- getLinkCommunities(g,directed=T,dirweight=verctor) in the case of directed networks with weighted edges
 lc<-newLinkCommsAt(data,cutat=0.84)
