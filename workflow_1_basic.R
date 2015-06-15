@@ -1,12 +1,12 @@
 #
-# cyREST example workflow
-# 
-#   Simple Community Detection
+# cyREST Example Workflow
+#
+#   Graph-Structure-Aware Visualization
+#
 # * Perform statistical analysis
 # * Detect communities
+# * Use them for Visualization
 #
-# 
-# Non-overlapping community detection ###
 
 library(RColorBrewer)
 library(igraph)
@@ -16,7 +16,6 @@ library(httr)
 # Utilities to use Cytoscape and R
 source("cytoscape_util.R")
 source("utils.R")
-
 
 # Step 1: Network Data Preparation
 
@@ -39,7 +38,6 @@ largest.subgraph <- subgraphs[[which.max(sapply(subgraphs, vcount))]]
 # Remove duplicate edges
 g <- simplify(largest.subgraph, remove.multiple=T, remove.loops=T)
 g$name <- "Yeast network"
-
 
 # Step 2: Basic statistical analysis
 
@@ -65,33 +63,15 @@ V(g)$community.greedy <- communities.greedy$membership
 V(g)$community.leading <- communities.leading$membership
 V(g)$community.label.propagation<- communities.label.propagation$membership
 
-# Generate color palet using number of communitie
-communityToColors <- function(members, num.communities) {
-  base.color <- "#AAAAAA"
-  num.members <- length(members)
-  colors <- array(base.color, dim=c(num.members))
-  print("Color len:")
-  print(length(colors))
-  print("Num members:")
-  print(length(members))
-  # Split color space into number of communities
-  color.pallet <- rainbow(num.communities)
-  
-  for(i in 1:num.members) {
-    newcolor <- color.pallet[members[i]]
-    print("Color VAL:")
-    if(length(newcolor) == 0) {
-      newcolor <- base.color
-    }
-    colors[i] <- newcolor
-  }
-  result <- array(sapply(colors,function(x){return(substring(x, 1, 7))}))
-  return(result)
-}
-
-V(g)$colors.community.greedy <- communityToColors(communities.greedy$membership, length(communities.greedy))
-V(g)$colors.community.leading <- communityToColors(communities.leading$membership, length(communities.leading))
-V(g)$colors.community.label.propagation <- communityToColors(communities.label.propagation$membership, length(communities.label.propagation))
+V(g)$colors.community.greedy <- communityToColors(
+  communities.greedy$membership,
+  length(communities.greedy))
+V(g)$colors.community.leading <- communityToColors(
+  communities.leading$membership,
+  length(communities.leading))
+V(g)$colors.community.label.propagation <- communityToColors(
+  communities.label.propagation$membership,
+  length(communities.label.propagation))
 
 E(g)$community.greedy <- getCommunityEdge(g, V(g)$community.greedy)
 E(g)$community.leading <- getCommunityEdge(g, V(g)$community.leading)
@@ -101,121 +81,54 @@ E(g)$colors.community.greedy <- communityToColors(array(E(g)$community.greedy), 
 E(g)$colors.community.leading <- communityToColors(array(E(g)$community.leading), length(communities.leading))
 E(g)$colors.community.label.propagation <- communityToColors(array(E(g)$community.label.propagation), length(communities.label.propagation))
 
-#for(i in 1:ecount(g)) {
-#  newcolor <- color.pallet[edgecoms[i]]
-#  print(newcolor)
-#  if(length(newcolor) == 0) {
-#    newcolor <- "#AAAAAA"
-#  }
-#  color.array.edge[i] <- newcolor
-#}
-#E(g)$color <- color.array.edge
 
+# Step 4: Send data to Cytoscape
+
+# Convert igraph object into Cytoscape.js JSON
 cyjs <- toCytoscape(g)
+
+# POST it to Cytoscape
 network.url = paste(base.url, "networks", sep="/")
 res <- POST(url=network.url, body=cyjs, encode="json")
+
+# Extract network SUID from the return value
 network.suid = unname(fromJSON(rawToChar(res$content)))
 
-# Build a custom Visual Style programatically
-style.name = "CommunityGreedy3"
+# Step 5: Use structure information for Visual Styles
 
-# Defaults
-def.node.border.width <- list(
-  visualProperty = "NODE_BORDER_WIDTH",
-  value = 0
-)
+# Generate Visual Styles
+style.greedy <- buildStyle("greedy", g, colors = "colors.community.greedy", community="community.greedy")
+style.leading <- buildStyle("leading", g, colors = "colors.community.leading", community="community.leading")
+style.label.propagation <- buildStyle("label.propagation", g,
+                                      colors = "colors.community.label.propagation", community="community.label.propagation")
 
-def.node.transparency <- list(
-  visualProperty="NODE_TRANSPARENCY",
-  value=200
-)
-
-def.edge.transparency <- list(
-  visualProperty="EDGE_TRANSPARENCY",
-  value=80
-)
-
-def.edge.width <- list(
-  visualProperty="EDGE_WIDTH",
-  value=1
-)
-
-def.network.background <- list(
-  visualProperty = "NETWORK_BACKGROUND_PAINT",
-  value = "black"
-)
-
-defaults <- list(
-  def.node.border.width,
-  def.edge.width,
-  def.node.transparency,
-  def.edge.transparency,
-  def.network.background
-)
-
-# Mappings 
-mappings = list()
-
-# Color mappings
-node.fill.color = list(
-  mappingType="passthrough",
-  mappingColumn="colors.community.greedy",
-  mappingColumnType="String",
-  visualProperty="NODE_FILL_COLOR"
-)
-
-edge.color = list(
-  mappingType="passthrough",
-  mappingColumn="colors.community.greedy",
-  mappingColumnType="String",
-  visualProperty="EDGE_STROKE_UNSELECTED_PAINT"
-)
-
-# Node Size Mapping
-min.betweenness = min(V(g)$betweenness)
-max.betweenness = max(V(g)$betweenness)
-
-point1 = list(
-  value=min.betweenness,
-  lesser= "10.0",
-  equal="10.0",
-  greater="10.0"
-)
-
-point2 = list(
-  value=max.betweenness,
-  lesser="200.0",
-  equal="200.0",
-  greater="200.0"
-)
-
-node.size.continuous.points = list(point1, point2)
-
-node.size = list(
-  mappingType="continuous",
-  mappingColumn="betweenness",
-  mappingColumnType="Double",
-  visualProperty="NODE_SIZE",
-  points = node.size.continuous.points
-)
-
-mappings = list(node.fill.color, edge.color, node.size)
-
-style <- list(title=style.name, defaults = defaults, mappings = mappings)
-style.JSON <- toJSON(style)
 style.url = paste(base.url, "styles", sep="/")
-POST(url=style.url, body=style.JSON, encode = "json")
+POST(url=style.url, body=style.greedy, encode = "json")
+POST(url=style.url, body=style.leading, encode = "json")
+POST(url=style.url, body=style.label.propagation, encode = "json")
 
-#apply.layout.url = paste(base.url, "apply/layouts/force-directed", toString(network.suid), sep="/")
+# Apply a Style
+apply.style.url = paste(base.url, "apply/styles/greedy", toString(network.suid), sep="/")
+GET(apply.style.url)
 
-apply.style.url = paste(base.url, "apply/styles", style.name, toString(network.suid), sep="/")
-res <- GET(apply.style.url)
+# Tweak Layout parameters
+layout.params = list(
+  name="unweighted",
+  value=TRUE
+)
 
-#apply.layout.url = paste(base.url, "apply/layouts/kamada-kawai", toString(network.suid), sep="/")
-#res <- GET(apply.layout.url)
+layout.params.url = paste(base.url, "apply/layouts/kamada-kawai/parameters", sep="/")
+PUT(layout.params.url, body=toJSON(list(layout.params)), encode = "json")
 
-#apply.bundling.url = paste(base.url, "apply/edgebundling", toString(network.suid), sep="/")
-#res <- GET(apply.bundling.url)
+# Apply layout
+params <- paste(toString(network.suid), "?column=community.greedy", sep="")
+apply.layout.url = paste(base.url, "apply/layouts/kamada-kawai", params, sep="/")
+GET(apply.layout.url)
 
-degree.dist <- degree.distribution(g)
-plot(degree.dist)
+# Perform Edge Bundling
+apply.bundling.url = paste(base.url, "apply/edgebundling", toString(network.suid), sep="/")
+GET(apply.bundling.url)
+
+# Toggle graphics details
+lod.url = paste(base.url, "ui/lod", sep="/")
+PUT(lod.url)
