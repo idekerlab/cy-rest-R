@@ -10,6 +10,7 @@ library(igraph)
 library(RJSONIO)
 library(httr)
 library(biomaRt)
+library(org.Hs.eg.db)
 
 # Utilities to use Cytoscape and R
 source("utility/cytoscape_util.R")
@@ -37,8 +38,12 @@ colnames(humannet.table) <- column.names
 
 # Extract unique genes
 genes <- c(humannet.table[[1]], humannet.table[[2]])
+genes.entrez <- sapply(genes, function(x) {return(toString(x))}) 
 
-# Annotate the network with Ensemble
+# Convert
+mySymbols <- mget(genes.entrez, org.Hs.egSYMBOL, ifnotfound=NA)
+mySymbols[1:10]
+#Annotate the network with Ensemble
 ensembl_human = useMart("ensembl", dataset="hsapiens_gene_ensembl")
 key="entrezgene"
 columns <- c("entrezgene", "go_id", "name_1006", "chromosome_name", "band", "strand", "ensembl_gene_id", "hgnc_symbol", "description")
