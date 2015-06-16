@@ -1,3 +1,4 @@
+# Utilities
 # Generate color palet using number of communitie
 communityToColors <- function(members, num.communities) {
   base.color <- "#AAAAAA"

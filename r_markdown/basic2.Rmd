@@ -1,11 +1,11 @@
 ---
-title: "Network Analysis with igraph"
+title: "cyREST: Network Analysis with igraph"
 author: "Keiichiro Ono"
-date: "8/7/2014"
+date: "6/15/2015"
 output: html_document
 ---
 
-## Basic Workflow 2: Working with igraph
+# Basic Workflow 2: Working with igraph
 
 by [Kazuhiro Takemoto](https://sites.google.com/site/kztakemoto/r-seminar-on-igraph---supplementary-information)*
 
@@ -17,7 +17,8 @@ Updated by [Keiichiro Ono](http://keiono.github.io/)
 
 ----
 
-![](http://cytoscape.org/images/logo/cy3logoOrange.svg)  ![](Rlogo.png)
+![](http://cytoscape.org/images/logo/cy3logoOrange.svg)
+![](http://www.r-project.org/Rlogo.png)
 
 
 ## Introduction
@@ -61,7 +62,7 @@ As you learned in the first tutorial, basic data exchange format between Cytosca
 
 ```{r}
 # This function will be published as a part of utility package, but not ready yet.
-source('toCytoscape.R')
+source('../utility/cytoscape_util.R')
 
 # Convert it into Cytosccape.js JSON
 cygraph <- toCytoscape(g.tca)
@@ -254,9 +255,3 @@ In this section, you made a style programmatically, but of course, you can manua
 cygraph.updated <- toCytoscape(g.tca)
 send2cy(cygraph.updated, style.name, 'circular')
 ```
-
-
-
-
-
-

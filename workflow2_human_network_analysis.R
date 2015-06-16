@@ -1,4 +1,5 @@
-# cyRest Demo 1:
+#source("http://Bioconductor.org/biocLite.R")
+# cyRest Demo 2:
 #   Community detection and visualization with igraph and Cytoscape
 #
 # by Keiichiro Ono (kono at uscd edu)
@@ -11,7 +12,7 @@ library(httr)
 library(biomaRt)
 
 # Utilities to use Cytoscape and R
-source("toCytoscape.R")
+source("utility/cytoscape_util.R")
 
 ########## Network Data Preparation ###########
 # Download HumanNet: Get description of data

@@ -8,14 +8,13 @@
 # * Use them for Visualization
 #
 
-library(RColorBrewer)
 library(igraph)
 library(RJSONIO)
 library(httr)
 
 # Utilities to use Cytoscape and R
-source("cytoscape_util.R")
-source("utils.R")
+source("utility/cytoscape_util.R")
+source("utility/utils.R")
 
 # Step 1: Network Data Preparation
 
@@ -80,7 +79,6 @@ E(g)$community.label.propagation <- getCommunityEdge(g, V(g)$community.label.pro
 E(g)$colors.community.greedy <- communityToColors(array(E(g)$community.greedy), length(communities.greedy))
 E(g)$colors.community.leading <- communityToColors(array(E(g)$community.leading), length(communities.leading))
 E(g)$colors.community.label.propagation <- communityToColors(array(E(g)$community.label.propagation), length(communities.label.propagation))
-
 
 # Step 4: Send data to Cytoscape
 
