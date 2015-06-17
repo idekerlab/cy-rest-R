@@ -33,6 +33,8 @@ This is a collection of R workflows to use Cytoscaep from R via [cyREST app](htt
 ## How to Use
 
 ### Quick Start Guide
+In addition to main workflows, there are some small tutorials in ___rmarkdown___ directory.  I recommend to try them first.
+
 * Install all required software
 * Start Cytoscape
 * Open web browser and visit [cyREST page in App Store](http://apps.cytoscape.org/apps/cyrest)
@@ -64,7 +66,20 @@ This workflow is designed to demonstrate how the combination of Cytoscape and ig
 
 You can use your own network if you want.
 
-#### Workflow 2: [HumanNet](http://www.functionalnet.org/humannet/about.html) visualization with automatic annotations  
+##### How to run
+* Start Cytoscape (w/ latest version of cyREST installed)
+* Start RStudio
+* Run ___workflow1_structure_based_visualization.R___
+
+#### Workflow 2: Interactome visualization as a collection of subgraphs
+
+![](http://chianti.ucsd.edu/~kono/images/humannet_session2.png)
+
+This is a simple script to import [HumanNet](http://www.functionalnet.org/humannet/about.html) interactome data from their web site, and add some extra annotations using [Bioconductor]() packages.  It automatically generates subgraphs using chromosome name (1-22, X/Y, and mitocondrial DNA).
+
+To run this workflow, you need to install some Bioconductor libraries first.
+
+(TBD)
 
 ## How to Cite
 (TBD)
