@@ -1,5 +1,5 @@
 ---
-title: "cyREST: Network Analysis with igraph"
+title: "Network Analysis and Visualization with igraph and Cytoscape"
 author: "Keiichiro Ono"
 date: "6/15/2015"
 output: html_document
@@ -13,7 +13,7 @@ by [Kazuhiro Takemoto](https://sites.google.com/site/kztakemoto/r-seminar-on-igr
 Updated by [Keiichiro Ono](http://keiono.github.io/)
 
 
-(The original tutorial was developed by Dr. Takemoto, and updated by Keiichiro Ono for cy-rest.)
+(The original tutorial was developed by Dr. Takemoto, and updated by Keiichiro Ono for cyREST)
 
 ----
 
@@ -27,7 +27,7 @@ Welcome to part 2 of the R tutorial.  In this section, you will learn how to use
 ### What is igraph?
 igraph is one of the most popular network analysis toolkits for R/Python/C.  It has a lot of graph analysis algorithms and utilities that Cytoscape does not have.  If you use Cytoscape from igraph, you can use variety of network analysis functions in igraph and visualize the result with powerful visualization tools available in Cytoscape.
 
-
+## Basic Setup
 ```{r}
 # Basic setup
 library(igraph)
@@ -42,10 +42,9 @@ print(base.url)
 ## Loading Networks
 There are many ways to import network data into igraph.  In this example, let's try to load text data as Data Frame, and then convert it into igraph object.
 
-
 ```{r}
 # Load list of edges as Data Frame
-network.df <- read.table("data/eco_EM+TCA.txt")
+network.df <- read.table("../data/eco_EM+TCA.txt")
 
 # Convert it into igraph object
 network <- graph.data.frame(network.df,directed=T)
@@ -57,7 +56,7 @@ g.tca <- simplify(network, remove.multiple=T, remove.loops=T)
 g.tca$name = "Ecoli TCA Cycle"
 ```
 
-### Convert igraph object into JSON
+## Convert igraph object into JSON
 As you learned in the first tutorial, basic data exchange format between Cytoscape and external tools is Cytoscape.js JSON.  To send igraph object to Cytoscape, you need to convert it into JSON: 
 
 ```{r}
@@ -69,16 +68,14 @@ cygraph <- toCytoscape(g.tca)
 ```
 
 
-### Visualize it in Cytoscape
+## Visualize it in Cytoscape
 Now you are ready to visualize your data in Cytoscape.  It's very straightforward:
 
 ```{r}
 send2cy(cygraph, 'default%20black', 'circular')
 ```
 
-
 If you want to visualize your network in igraph, obviously it is possible:
-
 
 ```{r}
 plot(g.tca,vertex.label=V(g.tca)$name)
@@ -96,38 +93,40 @@ You can tweak your result interactively with fully-featured network visualizatio
 ...Which one do you like?
 
 
-### Find Shortest Path
+## Find Shortest Path
 
-* Find path from _D-Glucose_ to _2-Oxoglutarate_
+Let's find shortest path from _D-Glucose_ to _2-Oxoglutarate_.  This is really easy with igraph:
 
 ```{r}
+PATH1 <- "path1"
+
 paths <- get.all.shortest.paths(g.tca,"D-Glucose","2-Oxoglutarate",mode="out")
 
 # Nodes in the first path
 print(V(g.tca)[paths$res[[1]]])
 
 # Add new attribute "path" and set value 1 for this path
-V(g.tca)[paths$res[[1]]]$path <- 1
+V(g.tca)[paths$res[[1]]]$path <- PATH1
 
 # Edges in the path
 print(E(g.tca,path=paths$res[[1]]))
 
 # Add path attribute
-E(g.tca, path=paths$res[[1]])$path <- 1
+E(g.tca, path=paths$res[[1]])$path <- PATH1
 ```
 
 ----
 
 
-### Understanding _Styles_
+## Understanding _Styles_
 In igraph _plot_ function, you need to specify actual visual property values directly.  For example, if you want to paint the path found in the previous section in red, you need to set actual color (red) for each edge in the path.  Instead, Cytoscape used a mapping mechanism called __Visual Style__ and __you can reuse the mapping instructions for multiple networks__.  For more details, please read the [manual](http://wiki.cytoscape.org/Cytoscape_3/UserManual/Styles).
 
 
-#### Visualizing Paths
+### Visualizing Paths
 Because Style in Cytoscape is so flexible, there are many ways to visualize your 
 The simplest way to visualize paths in Cytoscape is making a new attributes for the edges.
 
-##### Design your Style
+### Design your Style
 To understand basics of Style, let's build a simple Style from scratch including the following instructions:
 
 * Paint nodes and edges on the path in red
@@ -138,12 +137,17 @@ First, we need to set default values.  This is just an example.  Be creative to 
 
 ```{r}
 # Name of this new style
-style.name = "PathVisualization3"
+style.name = "PathVisualization"
+
+# Delete the existing style for fresh start...
+style.url = paste(base.url, "styles", sep="/")
+style.delete.url = paste(style.url, style.name, sep="/")
+DELETE(url=style.delete.url)
 
 # Define default values
 def.node.color <- list(
   visualProperty = "NODE_FILL_COLOR",
-  value = "#EEEEEE"
+  value = "#aaaaaa"
 )
 
 def.node.size <- list(
@@ -171,9 +175,24 @@ def.edge.target.arrow.color = list(
   value = "#aaaaaa"
 )
 
+def.edge.transparency = list(
+  visualProperty="EDGE_TRANSPARENCY",
+  value = 100
+)
+
+def.node.transparency = list(
+  visualProperty="NODE_TRANSPARENCY",
+  value = 100
+)
+
+def.node.label.transparency = list(
+  visualProperty="NODE_LABEL_TRANSPARENCY",
+  value = 100
+)
+
 def.node.labelposition <- list(
   visualProperty = "NODE_LABEL_POSITION",
-  value = "S,NW,c,4.00,0.00"  
+  value = "S,NW,c,7.00,0.00"  
 )
 
 def.edge.target.arrow <- list(
@@ -183,7 +202,9 @@ def.edge.target.arrow <- list(
 
 defaults <- list(def.node.color, def.node.size, def.node.labelposition, 
                  def.edge.color, def.node.border.width, def.edge.target.arrow, 
-                 def.edge.width, def.edge.target.arrow.color)
+                 def.edge.width, def.edge.target.arrow.color,
+                 def.node.transparency, def.node.label.transparency,
+                 def.edge.transparency)
 ```
 
 ```{r}
@@ -191,7 +212,7 @@ defaults <- list(def.node.color, def.node.size, def.node.labelposition,
 mappings = list()
 
 pair1 = list(
-  key = "1",
+  key = PATH1,
   value = "red"
 )
 
@@ -201,7 +222,7 @@ discrete.mappings = list(pair1)
 node.color = list(
   mappingType="discrete",
   mappingColumn="path",
-  mappingColumnType="Integer",
+  mappingColumnType="String",
   visualProperty="NODE_FILL_COLOR",
   map = discrete.mappings
 )
@@ -209,7 +230,7 @@ node.color = list(
 node.label.color = list(
   mappingType="discrete",
   mappingColumn="path",
-  mappingColumnType="Integer",
+  mappingColumnType="String",
   visualProperty="NODE_LABEL_COLOR",
   map = discrete.mappings
 )
@@ -217,7 +238,7 @@ node.label.color = list(
 edge.color = list(
   mappingType="discrete",
   mappingColumn="path",
-  mappingColumnType="Integer",
+  mappingColumnType="String",
   visualProperty="EDGE_STROKE_UNSELECTED_PAINT",
   map = discrete.mappings
 )
@@ -225,7 +246,7 @@ edge.color = list(
 edge.target.arrow.color = list(
   mappingType="discrete",
   mappingColumn="path",
-  mappingColumnType="Integer",
+  mappingColumnType="String",
   visualProperty="EDGE_TARGET_ARROW_UNSELECTED_PAINT",
   map = discrete.mappings
 )
@@ -237,12 +258,44 @@ node.label = list(
   visualProperty="NODE_LABEL"
 )
 
-mappings = list(node.color, node.label, node.label.color, edge.color, edge.target.arrow.color)
+pair.transparency = list(
+  key = PATH1,
+  value = "255"
+)
+discrete.transparency = list(pair.transparency)
+
+node.transparency = list(
+  mappingType="discrete",
+  mappingColumn="path",
+  mappingColumnType="String",
+  visualProperty="NODE_TRANSPARENCY",
+  map = discrete.transparency
+)
+
+edge.transparency = list(
+  mappingType="discrete",
+  mappingColumn="path",
+  mappingColumnType="String",
+  visualProperty="EDGE_TRANSPARENCY",
+  map = discrete.transparency
+)
+
+node.label.transparency = list(
+  mappingType="discrete",
+  mappingColumn="path",
+  mappingColumnType="String",
+  visualProperty="NODE_LABEL_TRANSPARENCY",
+  map = discrete.transparency
+)
+
+mappings = list(
+  node.color, node.label, node.label.color, 
+  edge.color, edge.target.arrow.color,
+  node.label.transparency, node.transparency, edge.transparency)
 
 style <- list(title=style.name, defaults = defaults, mappings = mappings)
 style.JSON <- toJSON(style)
 
-style.url = paste(base.url, "styles", sep="/")
 POST(url=style.url, body=style.JSON, encode = "json")
 
 ```
@@ -255,3 +308,10 @@ In this section, you made a style programmatically, but of course, you can manua
 cygraph.updated <- toCytoscape(g.tca)
 send2cy(cygraph.updated, style.name, 'circular')
 ```
+## Final Result
+
+And now you can see the network view like this:
+
+![](http://chianti.ucsd.edu/~kono/images/r_basic_2.png)
+
+You can use techniques you learned here for other data sets.  The good news is, the code is re-usable.  You can use the code segment above for other path visualization problems.
