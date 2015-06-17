@@ -44,7 +44,15 @@ In addition to main workflows, there are some small tutorials in ___rmarkdown___
 * Open the directory with RStudio
 * Run ```r_markdown/basic1.Rmd``` to start basic workflow
 
-### Workflows
+#### Basic Lesons
+
+![](http://chianti.ucsd.edu/~kono/images/r_basic_2.png)
+
+1. [Overview](https://github.com/idekerlab/cy-rest-R/blob/develop/r_markdown/basic1.Rmd)
+1. [Working with igraph and Cytoscape](https://github.com/idekerlab/cy-rest-R/blob/develop/r_markdown/basic2.Rmd)
+1. [More igraph and Visual Styles](https://github.com/idekerlab/cy-rest-R/blob/develop/r_markdown/basic3.Rmd)
+
+## Workflows
 There are some _workflow*_ R files in the top directory.  They are designed to star from an empty Cytoscape session. To run these scripts, simply start Cytoscape and run the R script from R console.  Make sure you installed all dependencies!
 
 #### Workflow 1: Automatic layout and visualization based on network structure
@@ -83,6 +91,14 @@ To run this workflow, you need to install some Bioconductor libraries first.
 
 ## How to Cite
 (TBD)
+
+## What's Next?
+These examples are using low-level, raw cyREST API.  It provides full access to most of the data objects, but you need a lot of _boilerplate_ code to do simplu stuff.  To avoid this issue, RCytoscape group is working on next generation of RCytoscape using cyREST as its backend:
+
+* [RCy3](https://github.com/tmuetze/Bioconductor_RCy3_the_new_RCytoscape)
+
+Once this is ready, we'll add more examples using this Bioconductor package. 
+
 
 ## Questions?
 Please contact me (kono at ucsd edu).
