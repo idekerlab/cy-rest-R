@@ -1,8 +1,8 @@
-# 
+#
 # cyRest workflow 2: Human interactome data integration
 #   Basic workflow to inport and annotate human interactome data set
-#   
-#   In this example, it uses HumanNet: 
+#
+#   In this example, it uses HumanNet:
 #
 # by Keiichiro Ono (kono at uscd edu)
 #
@@ -14,9 +14,6 @@ library(httr)
 library(biomaRt)
 library(org.Hs.eg.db)
 library(KEGG.db)
-
-library(hash)
-library(plyr)
 
 # Utilities to use Cytoscape and R
 source("utility/cytoscape_util.R")
@@ -45,8 +42,8 @@ genes.1 <- humannet.table[[1]]
 genes.2 <- humannet.table[[2]]
 
 # Convert them into texts instead of numbers
-genes.1.entrez <- sapply(genes.1, toString) 
-genes.2.entrez <- sapply(genes.2, toString) 
+genes.1.entrez <- sapply(genes.1, toString)
+genes.2.entrez <- sapply(genes.2, toString)
 
 # Convert them into biologist-friendly gene names
 genes.1.symbol <- mget(genes.1.entrez, org.Hs.egSYMBOL, ifnotfound=NA)
@@ -104,38 +101,74 @@ write.table(filtered, "humannet.annotation.txt", quote = FALSE, sep = "\t", row.
 
 
 # Create igraph object
-g <- graph.data.frame(edge.table, directed = FALSE, vertices = filtered2)
+g <- graph.data.frame(edge.table, directed = FALSE)
 
+# Post it to Cytoscape
+cyjs <- toCytoscape(g)
+network.url = paste(base.url, "networks?title=Interactome&collection=HumanNet_v1", sep="/")
+res <- POST(url=network.url, body=cyjs, encode="json")
+network.suid = unname(fromJSON(rawToChar(res$content)))
+
+# Devide into subgraphs
+by.chrom <- split(filtered, filtered$CHR)
+
+# Build ordered Chromosome name list
+sendGraph <- function(g, name, collection) {
+  cyjs <- toCytoscape(g)
+  urlparam = paste("networks?title=", name, "&collection=", collection, sep="")
+  network.url = paste(base.url, urlparam, sep="/")
+  res <- POST(url=network.url, body=cyjs, encode="json")
+  network.suid = unname(fromJSON(rawToChar(res$content)))
+
+  # Layout
+  apply.layout.url = paste(base.url, "apply/layouts/force-directed", toString(network.suid), sep="/")
+  GET(apply.layout.url)
+
+}
+
+chrom.name.ordered <- sapply(c(1:22), toString)
+chrom.name.ordered<- c(chrom.name.ordered, "X", "Y", "MT")
+
+for(i in 1:length(by.chrom)) {
+  key <- chrom.name.ordered[i]
+  ch.name <- paste("Chromosome", key, sep="_")
+  print(ch.name)
+  sym <- by.chrom[[key]]$symbol
+  subgraph <- induced.subgraph(g, levels(factor(sym)))
+  sendGraph(sugbraph, name = ch.name, collection = "HumanNet_v1")
+}
+
+
+# Filter by Metabolic pathway
+#genes.kegg.metabolic <- KEGGPATHID2EXTID$hsa00140
+
+# This is a large network.
 
 #Annotate the network with Ensemble
-ensembl_human = useMart("ensembl", dataset="hsapiens_gene_ensembl")
-key="entrezgene"
-columns <- c(
-  "entrezgene",
-  "go_id",
-  "name_1006",
-  "chromosome_name",
-  "band",
-  "strand",
-  "ensembl_gene_id",
-  "hgnc_symbol",
-  "description"
-)
-human.annotation <- getBM(attributes=columns, filters=key, values=eids, mart=ensembl_human)
-write.table(human.annotation, "humannet.annotation.baiomart.txt", quote = FALSE, sep = "\t", row.names = FALSE)
+#ensembl_human = useMart("ensembl", dataset="hsapiens_gene_ensembl")
+#key="entrezgene"
+#columns <- c(
+#  "entrezgene",
+#  "go_id",
+#  "name_1006",
+#  "chromosome_name",
+#  "band",
+#  "strand",
+#  "ensembl_gene_id",
+#  "hgnc_symbol",
+#  "description"
+#)
+#human.annotation <- getBM(attributes=columns, filters=key, values=eids, mart=ensembl_human)
+#write.table(human.annotation, "humannet.annotation.baiomart.txt", quote = FALSE, sep = "\t", row.names = FALSE)
 
-humannet.edgelist <- edge.table[c("gene1_symbol","gene2_symbol")]
-
-humannet.graph <- graph.data.frame(humannet.edgelist, directed=F)
+#humannet.edgelist <- edge.table[c("gene1_symbol","gene2_symbol")]
+#humannet.graph <- graph.data.frame(humannet.edgelist, directed=F)
 
 # Save it as a TSV file
-write.table(humannet.edgelist, "humannet.txt", quote = FALSE, sep = "\t", row.names = FALSE)
+#write.table(humannet.edgelist, "humannet.txt", quote = FALSE, sep = "\t", row.names = FALSE)
 
 # Post the network as EdgeList.  This is more efficient for large networks
-body <- apply(humannet.edgelist, 1, function(x) { return(sub(",", "", toString(x)))})
-edgelist.url = paste(base.url, "networks?format=edgelist&title=HumanNet&collection=human", sep="/")
-POST(url = edgelist.url, body = body, encode="json")
-#cyjs <- toCytoscape(g)
-#network.url = paste(base.url, "networks", sep="/")
-#res <- POST(url=network.url, body=cyjs, encode="json")
-#network.suid = unname(fromJSON(rawToChar(res$content)))
+#body <- apply(humannet.edgelist, 1, function(x) { return(sub(",", "", toString(x)))})
+#edgelist.url = paste(base.url, "networks?format=edgelist&title=HumanNet&collection=human", sep="/")
+#POST(url = edgelist.url, body = body, encode="json")
+
