@@ -135,7 +135,7 @@ for(i in 1:length(by.chrom)) {
   print(ch.name)
   sym <- by.chrom[[key]]$symbol
   subgraph <- induced.subgraph(g, levels(factor(sym)))
-  sendGraph(sugbraph, name = ch.name, collection = "HumanNet_v1")
+  sendGraph(subgraph, name = ch.name, collection = "HumanNet_v1")
 }
 
 
