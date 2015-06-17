@@ -1,22 +1,28 @@
-#source("http://Bioconductor.org/biocLite.R")
-# cyRest Demo 2:
-#   Community detection and visualization with igraph and Cytoscape
+# 
+# cyRest workflow 2: Human interactome data integration
+#   Basic workflow to inport and annotate human interactome data set
+#   
+#   In this example, it uses HumanNet: 
 #
 # by Keiichiro Ono (kono at uscd edu)
+#
 
 library(RColorBrewer)
-library(linkcomm)
 library(igraph)
 library(RJSONIO)
 library(httr)
 library(biomaRt)
 library(org.Hs.eg.db)
+library(KEGG.db)
+
+library(hash)
+library(plyr)
 
 # Utilities to use Cytoscape and R
 source("utility/cytoscape_util.R")
 
 ########## Network Data Preparation ###########
-# Download HumanNet: Get description of data
+# Download and prepare human interactome
 
 # 1. Prepare column names
 url.description <- "http://www.functionalnet.org/humannet/HumanNet.v1.evidence_code.txt"
@@ -31,89 +37,105 @@ url.humannet <- "http://www.functionalnet.org/humannet/HumanNet.v1.join.txt"
 file.humannet <- basename(url.humannet)
 download.file(url.humannet, file.humannet)
 humannet.table <- read.table(file.humannet, comment.char = "!",sep = "\t", fill=TRUE )
-humannet.graph <- graph.data.frame(humannet.table, directed=F)
-humannet.graph.simple <- simplify(humannet.graph, remove.multiple=T,remove.loops=T)
 
 colnames(humannet.table) <- column.names
 
-# Extract unique genes
-genes <- c(humannet.table[[1]], humannet.table[[2]])
-genes.entrez <- sapply(genes, function(x) {return(toString(x))}) 
+# Extract list of all genes in this network
+genes.1 <- humannet.table[[1]]
+genes.2 <- humannet.table[[2]]
 
-# Convert
-mySymbols <- mget(genes.entrez, org.Hs.egSYMBOL, ifnotfound=NA)
-mySymbols[1:10]
+# Convert them into texts instead of numbers
+genes.1.entrez <- sapply(genes.1, toString) 
+genes.2.entrez <- sapply(genes.2, toString) 
+
+# Convert them into biologist-friendly gene names
+genes.1.symbol <- mget(genes.1.entrez, org.Hs.egSYMBOL, ifnotfound=NA)
+genes.2.symbol <- mget(genes.2.entrez, org.Hs.egSYMBOL, ifnotfound=NA)
+
+# replace NA to NCBI gene ID
+num.rows <- length(genes.1.entrez)
+for(i in 1:num.rows) {
+  entry1 <- genes.1.symbol[i]
+  entry2 <- genes.2.symbol[i]
+  if(is.na(entry1[[1]])) {
+    genes.1.symbol[[i]] <- names(entry1)
+  }
+  if(is.na(entry2[[1]])) {
+    genes.2.symbol[[i]] <- names(entry2)
+  }
+}
+
+humannet.table[["gene1_symbol"]] <- sapply(unname(genes.1.symbol), function(x){return(x[1])})
+humannet.table[["gene2_symbol"]] <- sapply(unname(genes.2.symbol), function(x){return(x[1])})
+
+# Now replace Entrez gene IDs into Gene Symbols
+cnames <- colnames(humannet.table)
+cnames2 <- c(cnames[25:26], cnames[3:24])
+
+edge.table <- humannet.table[, cnames2]
+
+# Create node table
+# Extract unique gene list
+genes.entrez.all <-  unique(c(genes.1.entrez, genes.2.entrez))
+genes.symbol.all <- mget(genes.entrez.all, org.Hs.egSYMBOL, ifnotfound=NA)
+attr.kegg <- mget(genes.entrez.all, KEGGEXTID2PATHID, ifnotfound=list(NA))
+
+entrez <- names(genes.symbol.all)
+symbol <- array(unname(genes.symbol.all))
+kegg.annotation <- array(sapply(unname(attr.kegg), function(x){return(gsub(", " ,"|", toString(x)))}))
+
+eids <- sapply(entrez, toString)
+symbols <- sapply(symbol, function(x){return(x[1])})
+kegg <- sapply(kegg.annotation, function(x){return(x[1])})
+
+node.table <- data.frame(symbol=symbols, entrez=eids, kegg=kegg)
+
+# Add some more annotation...
+cols<-c("CHR","MAP")
+chrom <- select(org.Hs.eg.db, eids, cols, keytype="ENTREZID")
+df.chrom <- data.frame(chrom)
+names(df.chrom)[names(df.chrom)=="ENTREZID"] <- "entrez"
+node.table.final <- merge(node.table, df.chrom, by="entrez")
+
+# Reorder
+node.table.final <- node.table.final[, c("symbol", "entrez", "kegg","CHR","MAP")]
+filtered <- node.table.final[!(is.na(node.table.final$symbol)), ]
+write.table(filtered, "humannet.annotation.txt", quote = FALSE, sep = "\t", row.names = FALSE)
+
+
+# Create igraph object
+g <- graph.data.frame(edge.table, directed = FALSE, vertices = filtered2)
+
+
 #Annotate the network with Ensemble
 ensembl_human = useMart("ensembl", dataset="hsapiens_gene_ensembl")
 key="entrezgene"
-columns <- c("entrezgene", "go_id", "name_1006", "chromosome_name", "band", "strand", "ensembl_gene_id", "hgnc_symbol", "description")
-human.annotation <- getBM(attributes=columns, filters=key, values=genes, mart=ensembl_human)
-
-## Non-overlapping community detection
-
-# Load SIF file
-#brcaTable <- read.table("data/yeastHighQuality.sif")
-# Convert it to simple edge list
-#brcaGraph <- brcaTable[c(1,3)]
-# Convert data frame to igraph object
-#originalGraph <- graph.data.frame(brcaGraph,directed=F)
-
-# Extract componentes (individual connected regions)
-components <- decompose.graph(humannet.graph.simple)
-# Pick largest subgraph
-g <- components[[which.max(sapply(components, vcount))]]
-
-# Remove duplicate edges
-#g <- simplify(largestSubgraph, remove.multiple=T,remove.loops=T)
-# Find communities
-coms <- fastgreedy.community(g)
-
-# Set membership information to node attributes
-V(g)$community <- coms$membership
-V(g)$color <- coms$membership
-E(g)$community <- getCommunityEdge(g)
-
-cyjs <- toCytoscape(g)
-network.url = paste(base.url, "networks", sep="/")
-res <- POST(url=network.url, body=cyjs, encode="json")
-network.suid = unname(fromJSON(rawToChar(res$content)))
-
-
-# Build a custom Visual Style programatically
-style.name = "Community"
-
-# Defaults
-def.node.border.width <- list(
-  visualProperty = "NODE_BORDER_WIDTH",
-  value = 0
+columns <- c(
+  "entrezgene",
+  "go_id",
+  "name_1006",
+  "chromosome_name",
+  "band",
+  "strand",
+  "ensembl_gene_id",
+  "hgnc_symbol",
+  "description"
 )
+human.annotation <- getBM(attributes=columns, filters=key, values=eids, mart=ensembl_human)
+write.table(human.annotation, "humannet.annotation.baiomart.txt", quote = FALSE, sep = "\t", row.names = FALSE)
 
-def.edge.width <- list(
-  visualProperty="EDGE_WIDTH",
-  value=2
-)
+humannet.edgelist <- edge.table[c("gene1_symbol","gene2_symbol")]
 
-defaults <- list(def.node.border.width,def.edge.width)
+humannet.graph <- graph.data.frame(humannet.edgelist, directed=F)
 
-node.label = list(
-  mappingType="passthrough",
-  mappingColumn="name",
-  mappingColumnType="String",
-  visualProperty="NODE_LABEL"
-)
+# Save it as a TSV file
+write.table(humannet.edgelist, "humannet.txt", quote = FALSE, sep = "\t", row.names = FALSE)
 
-mappings = list(node.label)
-
-style <- list(title=style.name, defaults = defaults, mappings = mappings)
-style.JSON <- toJSON(style)
-
-style.url = paste(base.url, "styles", sep="/")
-POST(url=style.url, body=style.JSON, encode = "json")
-
-apply.layout.url = paste(base.url, "apply/layouts/force-directed", toString(network.suid), sep="/")
-apply.style.url = paste(base.url, "apply/styles", style.name, toString(network.suid), sep="/")
-
-res <- GET(apply.layout.url)
-res <- GET(apply.style.url)
-# Visualize network
-plot(g,vertex.size=5,vertex.label=V(g)$name,layout=layout.kamada.kawai)
+# Post the network as EdgeList.  This is more efficient for large networks
+body <- apply(humannet.edgelist, 1, function(x) { return(sub(",", "", toString(x)))})
+edgelist.url = paste(base.url, "networks?format=edgelist&title=HumanNet&collection=human", sep="/")
+POST(url = edgelist.url, body = body, encode="json")
+#cyjs <- toCytoscape(g)
+#network.url = paste(base.url, "networks", sep="/")
+#res <- POST(url=network.url, body=cyjs, encode="json")
+#network.suid = unname(fromJSON(rawToChar(res$content)))
