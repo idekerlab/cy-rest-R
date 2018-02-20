@@ -1,3 +1,9 @@
+---
+
+### This repository is here for legacy information. For more recent info on accessiong Cytoscape through R, please refer to the [RCy3](https://github.com/cytoscape/RCy3) library as well as the [Sample R Scripts](https://github.com/cytoscape/cytoscape-automation/tree/master/for-scripters/R) in the Cytoscape Automation repository.
+
+---
+
 # Sample cyREST workflows in R 
 
 ![](http://cl.ly/image/3O242T1K1k46/structure-aware-layout.png)
